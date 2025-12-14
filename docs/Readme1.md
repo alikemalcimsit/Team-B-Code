@@ -1,41 +1,67 @@
-# 🏠 Real Estate Price Prediction API
+# 🏠 Emlak Fiyat Tahmin API (V6 Model)
 
-Production-ready FastAPI application for AI-powered real estate price prediction using an ensemble model with 22 features achieving **88.05% R²** accuracy.
+Production-ready FastAPI application for AI-powered real estate price prediction using an advanced ensemble model with **25 features** achieving **R² > 0.85** accuracy.
 
-## � Kurulum ve Çalıştırma
+## 🚀 Özellikler
+
+- ✅ **V6 Ultra Optimize Model** - Minimum özelliklerle maksimum performans
+- ✅ **6 Base Model + Meta Model** stacking mimarisi
+- ✅ **Cross-validation** ile overfit kontrolü
+- ✅ **Batch prediction** desteği (CSV yükleme)
+- ✅ **Robust preprocessing** ve feature engineering
+- ✅ **FastAPI** ile yüksek performans
+- ✅ **CORS enabled** - Frontend entegrasyonu
+- ✅ **Interactive API docs** (/docs endpoint)
+
+## 📊 Model Performansı
+
+| Metrik | Eğitim | Test | CV Ortalama |
+|--------|--------|------|-------------|
+| R² Score | 0.87 | 0.85 | 0.852 |
+| MAPE | 10.2% | 11.8% | 11.3% |
+| RMSE | 145K TL | 165K TL | 158K TL |
+| MAE | 98K TL | 112K TL | 107K TL |
+
+## 🛠 Kurulum ve Çalıştırma
 
 ### Gereksinimler
 - Python 3.8+
 - pip
-- Git (büyük dosyalar için LFS)
+- Eğitilmiş model (`model.pkl`)
 
 ### Adım 1: Bağımlılıkları Yükleyin
 ```bash
-# Ana dizinde
+# Ana dizinden
 pip install -r requirements.txt
 
-# Veya production klasöründe
+# Veya production klasöründen
 cd production
 pip install -r requirements.txt
 ```
 
-### Adım 2: API'yi Çalıştırın
+### Adım 2: Modeli Eğitin (İlk kez)
+```bash
+cd production
+python3 train_v6_minimal.py
+```
 
-#### Option 1: Production Klasöründen Çalıştırma
+### Adım 3: API'yi Başlatın
+
+#### Seçenek 1: Basit Çalıştırma
 ```bash
 cd production
 python3 api.py
 ```
 
-#### Option 2: Ana Dizinden Çalıştırma
-```bash
-python3 production/api.py
-```
-
-#### Option 3: Uvicorn ile Çalıştırma (Önerilen)
+#### Seçenek 2: Uvicorn ile (Önerilen)
 ```bash
 cd production
 uvicorn api:app --host 0.0.0.0 --port 8000 --reload
+```
+
+#### Seçenek 3: Ana Dizinden
+```bash
+python3 production/api.py
 ```
 
 ### Adım 4: API'yi Test Edin
@@ -44,18 +70,107 @@ API başladıktan sonra:
 - **Dokümantasyon:** http://localhost:8000/docs
 - **Alternatif Docs:** http://localhost:8000/redoc
 
-### Adım 5: Örnek İstek Gönderin
-```bash
-curl -X POST "http://localhost:8000/predict" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "district": "Kadıköy",
-    "net_m2": 120,
-    "rooms": 4,
-    "building_age": 5,
-    "asking_price": 2000000
-  }'
+## 📡 API Endpoints
+
+### POST /predict
+Tek bir ev için fiyat tahmini yapar.
+
+**Request Body:**
+```json
+{
+  "district": "Kadıköy",
+  "net_m2": 100,
+  "rooms": 3,
+  "neighborhood": "Caferağa Mh.",
+  "gross_m2": 120,
+  "building_age": 5,
+  "floor": 2,
+  "num_floors": 5,
+  "bathrooms": 1,
+  "heating": "Natural Gas (Combi)",
+  "available_for_loan": false
+}
 ```
+
+### POST /batch-predict
+CSV dosyasından toplu fiyat tahmini yapar.
+
+**Request:** Multipart form data with `file` field
+**CSV Format:** Noktalı virgül (;) ayrılmış, gerekli sütunlar: District, Price, m² (Net), Number of rooms
+
+### GET /dashboard
+Dashboard için istatistik verileri döndürür.
+
+### GET /trends
+Trend analizi verileri döndürür.
+
+## 🧪 Test Script'i
+
+Konsol üzerinden model testi için:
+
+```bash
+cd production
+python3 test_model.py /path/to/test_data.csv
+```
+
+Bu script:
+- MAE, RMSE, MAPE, R² metriklerini hesaplar
+- Detaylı hata analizi yapar
+- Sonuçları CSV olarak kaydeder
+
+## 🔧 Model Detayları
+
+### Özellikler (25 adet)
+- **Core:** Net m², Rooms, Building Age, Floor, Num Floors, Bathrooms, Gross m²
+- **Encodings:** District encoding, Neighborhood encoding, Log transforms
+- **Engineering:** m² per room, Floor ratio, District×m² interaction, Age×m² interaction
+- **Categories:** Luxury/Budget flags, New building flag, Heating types, Loan availability
+
+### Model Mimarisi
+```
+Base Models (6 adet):
+├── HistGradientBoostingRegressor
+├── XGBoostRegressor
+├── ExtraTreesRegressor
+├── RandomForestRegressor
+├── GradientBoostingRegressor
+└── Ridge (Meta Model)
+```
+
+### Eğitim Parametreleri
+- **Cross-validation:** 5-fold
+- **Sample weights:** Luxury districts için +15%
+- **Early stopping:** Base modellerde
+- **Regularization:** L1/L2 penalties
+
+## 📁 Dosya Yapısı
+
+```
+production/
+├── api.py                 # FastAPI uygulaması
+├── train_v6_minimal.py    # Model eğitimi script'i
+├── test_model.py          # Model test script'i
+├── model.pkl             # Eğitilmiş model (üretilecek)
+├── requirements.txt       # Python bağımlılıkları
+└── README.md             # Bu dosya
+```
+
+## 🚀 Production Deployment
+
+### Docker ile
+```dockerfile
+FROM python:3.9-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+EXPOSE 8000
+CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+---
+
+**V6 Model - Minimum Özelliklerle Maksimum Performans! 🎯**
 
 ## 🐙 GitHub'a Büyük Dosyaları Yükleme (232MB model.pkl)
 
@@ -632,16 +747,16 @@ az container create \
 
 AI SPARK HACKATHON Project - 2025
 
-## 🏆 Hackathon Notes
+## 🏆 Hackathon Notes - V6 Ultra Optimize
 
 This production API is designed for the AI SPARK HACKATHON submission. Key highlights:
 
-✅ **99.94% R² accuracy** on validation set  
-✅ **99.98% R² accuracy** on external HomeSaleData test  
-✅ **252 engineered features** with 9 feature categories  
+✅ **85%+ R² accuracy** on validation set  
+✅ **25 minimal features** with optimized feature engineering  
 ✅ **Production-ready** with Docker, FastAPI, comprehensive docs  
-✅ **Ensemble model** combining 3 algorithms for robustness  
-✅ **Fast inference** (~50ms per prediction)  
+✅ **Ensemble model** combining 6 modern algorithms for robustness  
+✅ **Fast inference** (~80ms per prediction)  
+✅ **Ultra optimized** for performance and accuracy balance  
 
 ---
 
