@@ -2,7 +2,8 @@
 AI SPARK HACKATHON - SUNUM RAPORU
 ========================================================================
 
-TAKIM ADI: Team Be Code
+TAKIM ADI: Team B Code
+Ali Kemal Cimşit / Emirhan Alptekin / Berke Topbaş
 
 ------------------------------------------------------------------------
 1. PROBLEM TANIMI
